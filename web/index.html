@@ -107,6 +107,8 @@ main{position:relative;z-index:1;width:100%;max-width:440px;height:100%;padding:
 .btn:active{transform:translateY(5px);box-shadow:0 0 0 var(--black)}
 .btn.next{background:var(--green);color:#fff;text-shadow:2px 2px 0 var(--black)}
 .btn:disabled{opacity:.45;pointer-events:none}
+.btn.reset{flex:0 0 64px;background:var(--yellow);color:var(--black);font-size:28px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:5;background:var(--black);color:#fff;font-family:var(--fun);font-size:16px;padding:8px 16px;border-radius:999px;animation:pop .3s cubic-bezier(.2,1.8,.4,1)}
 
 .shake{animation:shake .4s}
 @keyframes shake{0%,100%{transform:none}25%{transform:translateX(-8px) rotate(-3deg)}75%{transform:translateX(8px) rotate(3deg)}}
@@ -127,6 +129,7 @@ main{position:relative;z-index:1;width:100%;max-width:440px;height:100%;padding:
   <div class="follow" id="follow"></div>
 
   <div class="actions">
+    <button class="btn reset" id="reset" aria-label="清空已抽记录">↻</button>
     <button class="btn next" id="next">抽一张</button>
   </div>
 </main>
@@ -204,6 +207,18 @@ for (let i = 0; i < 14; i++){
   Object.assign(dot.style, {width:s+"px", height:s+"px", left:Math.random()*100+"%", top:Math.random()*100+"%",
     background:`var(${colors[i%4]})`, animationDelay:(-Math.random()*9)+"s"});
   $("dots").appendChild(dot);
+}
+$("reset").onclick = () => {
+  if (!state.used.size) return toast("还没抽过题");
+  if (!confirm(`清空已抽过的 ${state.used.size} 道题？清空后它们可能会再被抽到。`)) return;
+  state.used.clear(); state.current = null;
+  renderBack(); $("follow").innerHTML = "";
+  toast("已清空，所有题目重新可抽");
+};
+function toast(msg){
+  document.querySelector(".toast")?.remove();
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 1800);
 }
 renderFilters(); renderBack();
 </script>
