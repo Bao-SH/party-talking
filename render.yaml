@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: party-talking
+    runtime: static
+    buildCommand: echo "index.html 已预先生成"
+    staticPublishPath: web

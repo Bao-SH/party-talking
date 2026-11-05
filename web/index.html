@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>聊聊卡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#E8202A; --yellow:#FFD400; --green:#14A84B; --blue:#1268C4; --black:#16161A;
+  --bg:#FFF6E0; --ink:#16161A; --paper:#FFFFFF;
+  --fun:"ZCOOL KuaiLe","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --text:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow-x:hidden}
+body{
+  background:var(--bg);color:var(--ink);font-family:var(--text);
+  overflow:hidden;height:100vh;height:100dvh;display:flex;flex-direction:column;align-items:center;
+}
+/* 背景里漂浮的彩色圆点 */
+.dots{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.dots i{position:absolute;border-radius:50%;opacity:.16;animation:float 9s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-28px)}}
+
+main{position:relative;z-index:1;width:100%;max-width:440px;height:100%;padding:12px 16px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;gap:10px}
+
+/* 标题：UNO 式倾斜椭圆 */
+.logo{margin-top:6px;background:var(--red);border:4px solid var(--yellow);border-radius:50%;
+  padding:6px 30px;transform:rotate(-8deg);box-shadow:0 5px 0 var(--black);animation:wiggle 3s ease-in-out infinite}
+.logo h1{margin:0;font-family:var(--fun);font-weight:400;font-size:34px;color:var(--yellow);
+  letter-spacing:4px;text-shadow:3px 3px 0 var(--black);-webkit-text-stroke:1px var(--black)}
+@keyframes wiggle{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(-3deg) scale(1.04)}}
+
+/* 筛选 */
+.filters{width:100%;display:flex;flex-direction:column;gap:6px}
+.row{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.chip{font-family:var(--fun);font-size:14px;border:3px solid var(--black);border-radius:999px;
+  padding:3px 10px;background:var(--paper);color:var(--ink);cursor:pointer;
+  box-shadow:0 3px 0 var(--black);transition:transform .15s}
+.chip:active{transform:translateY(3px);box-shadow:0 0 0 var(--black)}
+.chip.on{color:#fff}
+.chip.on[data-c=yellow]{color:var(--black)}
+.chip[data-c=red].on{background:var(--red)} .chip[data-c=yellow].on{background:var(--yellow)}
+.chip[data-c=green].on{background:var(--green)} .chip[data-c=blue].on{background:var(--blue)}
+.chip[data-c=black].on{background:var(--black)}
+.chip[data-c=wild].on{background:conic-gradient(var(--red) 0 25%,var(--yellow) 0 50%,var(--green) 0 75%,var(--blue) 0);text-shadow:0 1px 2px #000}
+.chip.lv.on{background:var(--black)}
+.chip:not(.on){background:transparent;color:#A8A29A;border:2px dashed #C9C2B6;box-shadow:none;text-decoration:line-through;transform:scale(.94)}
+.chip.on{transform:translateY(-2px);box-shadow:0 5px 0 var(--black)}
+.chip.on::before{content:"✓ ";font-weight:700}
+
+/* 牌桌 */
+.table{position:relative;width:100%;flex:1;min-height:0;container-type:size;display:flex;align-items:center;justify-content:center;perspective:1200px}
+.card{width:min(300px,82vw,calc((100cqh - 16px) * 2 / 3));aspect-ratio:2/3;border-radius:22px;border:8px solid #fff;
+  box-shadow:0 0 0 3px var(--black),0 12px 0 -2px rgba(0,0,0,.25);position:relative;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;user-select:none}
+
+/* 牌背 */
+.back{background:var(--black);cursor:pointer;animation:bob 2.2s ease-in-out infinite}
+.back::before{content:"";position:absolute;width:115%;height:62%;background:var(--red);
+  border-radius:50%;transform:rotate(-55deg)}
+.back span{position:relative;font-family:var(--fun);font-size:58px;color:var(--yellow);
+  transform:rotate(-14deg);text-shadow:4px 4px 0 var(--black);-webkit-text-stroke:2px var(--black)}
+.back small{position:absolute;bottom:18px;font-family:var(--fun);color:#fff;font-size:15px;opacity:.85}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(2deg)}}
+.stack{position:absolute;inset:0;display:flex;justify-content:center;pointer-events:none}
+.stack .card{position:absolute;background:var(--black)}
+.stack .card:nth-child(1){transform:rotate(7deg) translate(10px,6px)}
+.stack .card:nth-child(2){transform:rotate(-5deg) translate(-8px,4px)}
+
+/* 牌面 */
+.front{color:#fff;animation:deal .55s cubic-bezier(.2,1.6,.4,1) both}
+.front[data-c=red]{background:var(--red)} .front[data-c=yellow]{background:var(--yellow);color:var(--black)}
+.front[data-c=green]{background:var(--green)} .front[data-c=blue]{background:var(--blue)}
+.front[data-c=black]{background:var(--black)}
+.front[data-c=wild]{background:conic-gradient(from 20deg,var(--red) 0 25%,var(--blue) 0 50%,var(--yellow) 0 75%,var(--green) 0)}
+@keyframes deal{0%{transform:translateY(-60px) rotateY(90deg) scale(.7);opacity:0}
+  100%{transform:none;opacity:1}}
+.front .oval{position:absolute;width:118%;height:70%;background:#fff;border-radius:50%;transform:rotate(-55deg)}
+.front .q{position:relative;z-index:1;width:84%;color:var(--black);text-align:center;
+  font-weight:800;font-size:clamp(18px,5.4vw,22px);line-height:1.5}
+.front .tag{display:inline-block;margin-top:8px;font-size:12px;font-weight:600;
+  background:var(--black);color:#fff;border-radius:999px;padding:2px 9px}
+.corner{position:absolute;font-family:var(--fun);font-size:30px;line-height:1;z-index:1;
+  text-shadow:2px 2px 0 var(--black);-webkit-text-stroke:1px var(--black)}
+.corner.tl{top:10px;left:12px} .corner.br{bottom:10px;right:12px}
+.front[data-c=yellow] .corner{color:#fff}
+.label{position:absolute;top:14px;right:14px;z-index:1;font-family:var(--fun);font-size:14px;
+  background:rgba(0,0,0,.28);color:#fff;padding:2px 10px;border-radius:999px}
+.front[data-c=wild] .label,.front[data-c=yellow] .label{background:var(--black)}
+
+/* 追问 */
+.follow{width:100%;height:80px;flex-shrink:0;overflow:auto;text-align:center}
+.follow button{font-family:var(--fun);font-size:16px;background:none;border:3px dashed var(--black);
+  border-radius:14px;padding:8px 16px;cursor:pointer;color:var(--ink)}
+.follow p{margin:0;background:#fff;border:3px solid var(--black);border-radius:14px;padding:10px 14px;
+  font-size:16px;line-height:1.5;box-shadow:0 4px 0 var(--black);animation:pop .4s cubic-bezier(.2,1.8,.4,1)}
+.follow p b{font-family:var(--fun);font-weight:400;color:var(--red);margin-right:4px}
+@keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:none;opacity:1}}
+
+/* 操作按钮 */
+.actions{display:flex;gap:12px;width:100%}
+.btn{flex:1;font-family:var(--fun);font-size:21px;border:3px solid var(--black);border-radius:16px;
+  padding:12px 0;cursor:pointer;box-shadow:0 5px 0 var(--black);transition:transform .12s}
+.btn:active{transform:translateY(5px);box-shadow:0 0 0 var(--black)}
+.btn.next{background:var(--green);color:#fff;text-shadow:2px 2px 0 var(--black)}
+.btn:disabled{opacity:.45;pointer-events:none}
+
+.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-8px) rotate(-3deg)}75%{transform:translateX(8px) rotate(3deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="dots" id="dots"></div>
+<main>
+  <div class="logo"><h1>聊聊卡</h1></div>
+
+  <div class="filters">
+    <div class="row" id="dirRow"></div>
+    <div class="row" id="lvRow"></div>
+  </div>
+
+  <div class="table" id="table"></div>
+  <div class="follow" id="follow"></div>
+
+  <div class="actions">
+    <button class="btn next" id="next">抽一张</button>
+  </div>
+</main>
+
+<script>
+const QS = [{"d": "family", "l": 1, "q": "小时候你因为什么事被罚得最惨？", "tag": "", "f": "现在回头看，冤不冤？"}, {"d": "family", "l": 1, "q": "你小时候被大人骗过、而且信了很多年的一件事是什么？", "tag": "", "f": "什么时候发现是假的？"}, {"d": "family", "l": 1, "q": "你家有什么习惯，是你长大后才发现别人家没有的？", "tag": "", "f": "你现在还保留着吗？"}, {"d": "family", "l": 1, "q": "小时候你最想成为什么样的人？", "tag": "", "f": "这个梦想后来怎么样了？"}, {"d": "family", "l": 2, "q": "成长过程中，有没有一个老师或长辈对你影响特别大？", "tag": "", "f": "TA 做过的哪件事你记到现在？"}, {"d": "family", "l": 2, "q": "你小时候最开心的一段时间是什么时候？", "tag": "", "f": "那时候的开心和现在的开心有什么不一样？"}, {"d": "family", "l": 2, "q": "你第一次离开家生活是什么时候？那时候是什么感觉？", "tag": "", "f": "最不适应的是什么？"}, {"d": "family", "l": 2, "q": "家里有没有一个亲戚，你觉得 TA 的故事特别有意思？", "tag": "", "f": "你从 TA 身上学到了什么？"}, {"d": "family", "l": 2, "q": "你身上哪一点最像你爸或你妈？", "tag": "", "f": "什么时候意识到的？你喜欢这一点吗？"}, {"d": "family", "l": 2, "q": "你小时候有没有特别想要、却一直没得到的东西？", "tag": "", "f": "长大后自己买了吗？买到之后是什么感觉？"}, {"d": "family", "l": 2, "q": "你从家乡带出来、到现在还改不掉的是什么？（口音、口味、习惯都算）", "tag": "", "f": "你想改掉吗？"}, {"d": "family", "l": 2, "q": "你和家人一起经历过的、最难忘的一次出门或过节是哪次？", "tag": "", "f": "现在还会这样聚吗？"}, {"d": "family", "l": 3, "q": "长大后，你对父母哪一点的看法变了？", "tag": "可浅答", "f": "是哪件事让你改变的？"}, {"d": "family", "l": 3, "q": "你觉得自己现在的性格，有多少是家里给的？", "tag": "", "f": "哪一部分是你后来自己长出来的？"}, {"d": "family", "l": 3, "q": "有没有一件事，小时候觉得天大，现在看其实很小？", "tag": "", "f": "当时是谁、或者是什么陪你熬过去的？"}, {"d": "family", "l": 3, "q": "如果以后你有自己的家（任何形式），你最想延续什么、避免什么？", "tag": "", "f": "这个想法是从哪来的？"}, {"d": "family", "l": 3, "q": "你觉得自己是从什么时候开始\"长大\"的？", "tag": "", "f": "那之后你失去了什么，又得到了什么？"}, {"d": "family", "l": 3, "q": "从小被教的道理里，有哪一条你现在不认同了？", "tag": "", "f": "从什么时候开始怀疑它的？"}, {"d": "family", "l": 3, "q": "如果能回到童年的某一天，待上一整天，你会选哪一天？", "tag": "", "f": "为什么是那一天？"}, {"d": "family", "l": 3, "q": "你觉得你们这一代和父母那一代，最大的不同是什么？", "tag": "", "f": "你羡慕他们什么？"}, {"d": "love", "l": 1, "q": "你现在认识最久的朋友，是怎么认识的？", "tag": "", "f": "你对 TA 的第一印象是什么？"}, {"d": "love", "l": 1, "q": "讲一件你和朋友一起干过的最傻或最疯的事。", "tag": "", "f": "现在还会这么干吗？"}, {"d": "love", "l": 1, "q": "你第一次喜欢一个人是什么时候？TA 是什么样的？", "tag": "可浅答", "f": "后来怎么样了？"}, {"d": "love", "l": 1, "q": "你经历过或听说过最离谱的一次约会或相亲是什么样的？", "tag": "", "f": "后来有下文吗？"}, {"d": "love", "l": 1, "q": "你会被什么样的人吸引？这个\"类型\"这些年变了吗？", "tag": "", "f": "是什么让它变的？"}, {"d": "love", "l": 1, "q": "你收到过最用心的一份礼物是什么？谁送的？", "tag": "", "f": "你送过最用心的礼物又是什么？"}, {"d": "love", "l": 2, "q": "你觉得自己是一个什么样的朋友？", "tag": "", "f": "你的朋友们会同意吗？"}, {"d": "love", "l": 2, "q": "有没有一个朋友，是在你很困难的时候出现的？", "tag": "", "f": "TA 做了什么让你记到现在？"}, {"d": "love", "l": 2, "q": "有没有一段友谊慢慢淡了？你现在怎么看这件事？", "tag": "", "f": "如果再见到 TA，你会说什么？"}, {"d": "love", "l": 2, "q": "你交朋友时，最看重对方身上的什么？", "tag": "", "f": "这个标准这些年变过吗？"}, {"d": "love", "l": 2, "q": "在感情里（暗恋、恋爱都算），你最常犯的毛病是什么？", "tag": "", "f": "你是怎么意识到的？"}, {"d": "love", "l": 2, "q": "你吵架是什么风格：冷战、讲道理，还是先认怂？", "tag": "", "f": "这个风格是跟谁学的？"}, {"d": "love", "l": 2, "q": "有没有朋友说过一句话，你一直记着？", "tag": "", "f": "你后来照着做了吗？"}, {"d": "love", "l": 2, "q": "你身边有没有一对让你觉得\"原来感情可以这样\"的人？", "tag": "", "f": "他们身上有什么是你想学的？"}, {"d": "love", "l": 2, "q": "你心目中的浪漫是什么样的？", "tag": "", "f": "你经历过最接近的一次是什么时候？"}, {"d": "love", "l": 2, "q": "喜欢上一个人的时候，你会变成什么样？朋友们怎么吐槽你？", "tag": "", "f": "你自己察觉到了吗？"}, {"d": "love", "l": 2, "q": "在感情里，你更习惯照顾对方，还是被对方照顾？", "tag": "", "f": "你希望反过来试试吗？"}, {"d": "love", "l": 2, "q": "表白、被表白，或者差一点就表白了，哪一次你最难忘？", "tag": "可浅答", "f": "如果重来一次，你会怎么做？"}, {"d": "love", "l": 3, "q": "你对\"喜欢一个人\"的理解，和十几岁的时候比有什么不同？", "tag": "", "f": "是哪段经历让你改变的？"}, {"d": "love", "l": 3, "q": "你觉得一段好的关系（友情或爱情）最重要的是什么？", "tag": "", "f": "这个答案是怎么得来的？"}, {"d": "love", "l": 3, "q": "很多人说越长大越难交到新朋友，你是这样吗？", "tag": "", "f": "你觉得原因是什么？"}, {"d": "love", "l": 3, "q": "有没有一段关系（任何关系都行）让你更了解了自己？", "tag": "", "f": "你了解到了什么？"}, {"d": "love", "l": 3, "q": "一个人生活和两个人生活，你觉得各自最好的地方是什么？", "tag": "", "f": "你现在更想要哪一种？"}, {"d": "love", "l": 3, "q": "你觉得爱是可以学会的吗？", "tag": "", "f": "你从谁那里学到过一点？"}, {"d": "love", "l": 3, "q": "什么样的事会让你决定离开一段关系或友谊？", "tag": "", "f": "这条底线是怎么形成的？"}, {"d": "love", "l": 3, "q": "你对结婚或长期在一起的看法，这几年有变化吗？", "tag": "", "f": "是什么影响了你？"}, {"d": "love", "l": 3, "q": "两个人在一起，应该为对方改变吗？改到什么程度？", "tag": "", "f": "你为谁改变过吗？"}, {"d": "love", "l": 3, "q": "\"合适\"和\"喜欢\"，你觉得哪个更重要？", "tag": "", "f": "是哪段经历让你这么想的？"}, {"d": "love", "l": 3, "q": "你在感情里最没有安全感的时候，是什么样子的？", "tag": "可浅答", "f": "后来是什么让你安心下来的？"}, {"d": "love", "l": 3, "q": "你最希望伴侣（或者未来的伴侣）懂你的哪一点？", "tag": "", "f": "为什么这一点对你那么重要？"}, {"d": "couple", "l": 1, "q": "你们是怎么认识的？两个人各讲一遍自己的版本。", "tag": "", "f": "哪里对不上？"}, {"d": "couple", "l": 1, "q": "你们之间有什么只有彼此懂的外号、暗号或者梗？", "tag": "", "f": "是怎么来的？"}, {"d": "couple", "l": 1, "q": "在一起之后，你被对方\"带偏\"了什么习惯？", "tag": "", "f": "对方承认吗？"}, {"d": "couple", "l": 2, "q": "你第一次对 TA 心动，是在什么时候？", "tag": "", "f": "TA 当时知道吗？"}, {"d": "couple", "l": 2, "q": "你们吵过最莫名其妙的一次架是因为什么？", "tag": "", "f": "最后谁先低头的？"}, {"d": "couple", "l": 2, "q": "你们俩在什么事情上最不一样？是怎么磨合的？", "tag": "", "f": "现在还会因为这个吵吗？"}, {"d": "couple", "l": 2, "q": "对方身上最让你意外的一面是什么？", "tag": "", "f": "是什么时候发现的？"}, {"d": "couple", "l": 2, "q": "在一起之后，你最大的变化是什么？先让对方说，你再说。", "tag": "", "f": "两个答案一样吗？"}, {"d": "couple", "l": 2, "q": "对方做过的哪件小事，让你特别感动？", "tag": "", "f": "TA 自己还记得吗？"}, {"d": "couple", "l": 3, "q": "你是从什么时候开始确定，想和 TA 长久走下去的？", "tag": "", "f": "TA 那时候察觉到了吗？"}, {"d": "couple", "l": 3, "q": "你们一起经历过最难的一段时间是什么时候？是怎么过来的？", "tag": "可浅答", "f": "那段时间之后，你们之间有什么变了？"}, {"d": "couple", "l": 3, "q": "你从对方身上学到最多的是什么？", "tag": "", "f": "以前的你会怎么看这一点？"}, {"d": "couple", "l": 3, "q": "你们的关系里，哪一点是你最想好好守住的？", "tag": "", "f": "有没有差点失去它的时候？"}, {"d": "couple", "l": 3, "q": "想象十年后你们的某个普通周末，会是什么样？", "tag": "", "f": "让对方补充或者纠正。"}, {"d": "couple", "l": 3, "q": "有没有一件事一直想谢谢对方，但从没正式说过？今天可以说出来。", "tag": "可跳过", "f": "对方可以回一句。"}, {"d": "work", "l": 1, "q": "你第一次自己挣到钱是怎么挣的？花在哪了？", "tag": "", "f": "那时候觉得这笔钱多吗？"}, {"d": "work", "l": 1, "q": "你遇到过最奇葩的同事、老板或客户是什么样的？", "tag": "", "f": "你当时是怎么应对的？"}, {"d": "work", "l": 1, "q": "你花过最值的一笔钱是什么？最冤的呢？", "tag": "", "f": "再来一次还会买吗？"}, {"d": "work", "l": 1, "q": "小时候你觉得最酷的职业是什么？", "tag": "", "f": "现在还觉得酷吗？"}, {"d": "work", "l": 2, "q": "你的第一份工作是怎么找到的？有什么印象深刻的事？", "tag": "", "f": "它教会了你什么？"}, {"d": "work", "l": 2, "q": "你做过最难的一个工作决定是什么？", "tag": "", "f": "现在回头看，选对了吗？"}, {"d": "work", "l": 2, "q": "有没有一个上司或前辈，是你特别想感谢、或者特别不想成为的？", "tag": "", "f": "TA 的哪件事让你这么想？"}, {"d": "work", "l": 2, "q": "你家里从小对钱的态度，对你影响大吗？", "tag": "", "f": "你现在跟家里一样，还是反着来？"}, {"d": "work", "l": 2, "q": "你在什么东西上特别舍得花钱，在什么东西上特别抠？", "tag": "", "f": "为什么是这两样？"}, {"d": "work", "l": 2, "q": "你工作中最有成就感的一刻是什么时候？", "tag": "", "f": "当时有人知道吗？"}, {"d": "work", "l": 2, "q": "有没有一个你认真考虑过、最后没走的职业方向？", "tag": "", "f": "现在偶尔还会想起吗？"}, {"d": "work", "l": 2, "q": "你觉得自己在工作上最大的优点和最大的毛病分别是什么？", "tag": "", "f": "这两个是不是同一件事的两面？"}, {"d": "work", "l": 3, "q": "工作对你来说最重要的是什么：钱、成长、意义，还是别的？这个答案变过吗？", "tag": "", "f": "什么时候变的？"}, {"d": "work", "l": 3, "q": "钱多到什么程度，你会觉得\"够了\"？", "tag": "", "f": "够了之后你想做什么？"}, {"d": "work", "l": 3, "q": "如果不用为钱工作，你还会做现在这份工作吗？", "tag": "", "f": "不做的话，你会去做什么？"}, {"d": "work", "l": 3, "q": "你羡慕过谁的工作或生活吗？现在还羡慕吗？", "tag": "", "f": "你羡慕的到底是什么？"}, {"d": "work", "l": 3, "q": "有没有哪一刻，你觉得自己做的事情真的有意义？", "tag": "", "f": "那种感觉后来还有过吗？"}, {"d": "work", "l": 3, "q": "你心里的\"成功\"是什么样子？这个定义是谁给你的？", "tag": "", "f": "你想换一个定义吗？"}, {"d": "work", "l": 3, "q": "你愿意少拿多少收入，去换更多的自由时间？", "tag": "", "f": "你真的做过这样的交换吗？"}, {"d": "work", "l": 3, "q": "十年后，你希望自己在做什么样的工作？", "tag": "", "f": "现在离那里有多远？"}, {"d": "life", "l": 1, "q": "讲一次旅行或出门时，计划完全被打乱的经历。", "tag": "", "f": "最后是怎么收场的？"}, {"d": "life", "l": 1, "q": "你最近\"上头\"的东西是什么？（一部剧、一个游戏、一种食物都行）", "tag": "", "f": "是怎么入坑的？"}, {"d": "life", "l": 1, "q": "你吃过印象最深的一顿饭，是在哪儿、和谁？", "tag": "", "f": "后来还吃过一样好吃的吗？"}, {"d": "life", "l": 1, "q": "你有没有一个别人觉得没必要、你却一直坚持的小习惯？", "tag": "", "f": "这个习惯是怎么来的？"}, {"d": "life", "l": 2, "q": "你住过的地方里，最怀念哪里？", "tag": "", "f": "怀念的是地方，还是那时候的生活？"}, {"d": "life", "l": 2, "q": "你哪段时间的生活状态最好？好在哪里？", "tag": "", "f": "还回得去吗？"}, {"d": "life", "l": 2, "q": "有没有一个你曾经很热爱、后来放弃了的爱好？", "tag": "", "f": "是什么让你放下的？"}, {"d": "life", "l": 2, "q": "有没有一本书、一部电影或一首歌，在某段时间特别打动你？", "tag": "", "f": "那时候你正在经历什么？"}, {"d": "life", "l": 2, "q": "你最近在学、或者在琢磨的一件事是什么？", "tag": "", "f": "为什么突然想做这件事？"}, {"d": "life", "l": 2, "q": "你一个人做过的、最享受的一件事是什么？（旅行、吃饭、看电影都算）", "tag": "", "f": "一个人做和跟别人一起做，差别在哪？"}, {"d": "life", "l": 2, "q": "你理想中的周末是怎么过的？", "tag": "", "f": "上一次这样过是什么时候？"}, {"d": "life", "l": 2, "q": "这些年，哪一个变化让你感受最深？（科技、城市、家乡都行）", "tag": "", "f": "你觉得它让生活变好了还是变差了？"}, {"d": "life", "l": 3, "q": "你理想的生活是什么样的？现在离它有多远？", "tag": "", "f": "最大的差距在哪？"}, {"d": "life", "l": 3, "q": "有没有一件事，能让你投入到忘了时间？", "tag": "", "f": "你现在还在做吗？"}, {"d": "life", "l": 3, "q": "如果可以去任何城市重新开始生活，你会去哪？", "tag": "", "f": "是什么让你还没去？"}, {"d": "life", "l": 3, "q": "你觉得现在过的，是你自己选的生活吗？", "tag": "", "f": "哪一部分是你选的，哪一部分是顺着走的？"}, {"d": "life", "l": 3, "q": "你什么时候会觉得\"活着真好\"？", "tag": "", "f": "最近一次是什么时候？"}, {"d": "life", "l": 3, "q": "有什么东西是你花了很长时间才学会享受的？", "tag": "", "f": "是什么让你开窍的？"}, {"d": "life", "l": 3, "q": "这几年，你觉得自己变得更会生活了，还是更不会了？", "tag": "", "f": "是什么让你变成这样？"}, {"d": "life", "l": 3, "q": "如果余生只能保留一个爱好，你会留哪个？", "tag": "", "f": "它给了你什么？"}, {"d": "self", "l": 1, "q": "你干过最冲动的一件事是什么？", "tag": "", "f": "后来后悔了吗？"}, {"d": "self", "l": 1, "q": "讲一次你特别丢脸、但现在想起来很好笑的经历。", "tag": "", "f": "当时在场的人后来还提过吗？"}, {"d": "self", "l": 1, "q": "你有什么别人可能不知道的奇怪小技能？", "tag": "", "f": "是怎么练出来的？"}, {"d": "self", "l": 1, "q": "你最容易因为什么小事开心？", "tag": "", "f": "最近一次是什么时候？"}, {"d": "self", "l": 2, "q": "你做过最难的一个选择是什么？当时是怎么定下来的？", "tag": "", "f": "现在回头看，觉得选对了吗？"}, {"d": "self", "l": 2, "q": "你觉得别人对你最大的误解是什么？", "tag": "", "f": "你会去解释吗？"}, {"d": "self", "l": 2, "q": "有没有哪件事，你以前很看重，现在觉得无所谓了？", "tag": "", "f": "是什么让你改变的？"}, {"d": "self", "l": 2, "q": "有没有一次，你特别为自己骄傲？", "tag": "", "f": "当时有人知道吗？"}, {"d": "self", "l": 2, "q": "你做过哪个身边人都觉得\"不像你会做\"的决定？", "tag": "", "f": "你当时心里是怎么想的？"}, {"d": "self", "l": 2, "q": "你最近改变过的一个看法是什么？", "tag": "", "f": "是被谁或什么事说服的？"}, {"d": "self", "l": 2, "q": "你最近一次走出舒适区是什么时候？", "tag": "", "f": "结果比你想的好还是差？"}, {"d": "self", "l": 2, "q": "你最想改掉自己的哪个习惯？试过吗？", "tag": "", "f": "为什么这么难改？"}, {"d": "self", "l": 3, "q": "你觉得自己哪一年变化最大？那一年发生了什么？", "tag": "", "f": "你更喜欢那之前的自己，还是之后的？"}, {"d": "self", "l": 3, "q": "有没有一个道理，你过了很多年才想明白？", "tag": "", "f": "如果早点明白，会有什么不同？"}, {"d": "self", "l": 3, "q": "十年前的你，会怎么看现在的你？", "tag": "", "f": "哪一点会让 TA 最意外？"}, {"d": "self", "l": 3, "q": "你什么时候最像真实的自己？", "tag": "", "f": "为什么其他时候不是？"}, {"d": "self", "l": 3, "q": "如果人生能重来，有没有哪个路口你会选另一条路？", "tag": "", "f": "还是哪条都不想改？"}, {"d": "self", "l": 3, "q": "你最害怕变老的哪一部分？最期待的又是哪一部分？", "tag": "", "f": "你身边有没有\"老得很好\"的榜样？"}, {"d": "self", "l": 3, "q": "有没有一次告别（一个人、一个地方或一段生活），让你印象很深？", "tag": "", "f": "当时你知道那是最后一次吗？"}, {"d": "self", "l": 3, "q": "你希望以后别人提起你，会说你是个什么样的人？", "tag": "", "f": "现在的你离那个样子有多远？"}];
+const DIRS = [
+  {k:"family", name:"成长与家庭", c:"yellow"},
+  {k:"love",   name:"朋友与爱情", c:"red"},
+  {k:"work",   name:"工作与金钱", c:"green"},
+  {k:"life",   name:"生活与热爱", c:"blue"},
+  {k:"self",   name:"自我与人生", c:"black"},
+  {k:"couple", name:"情侣卡", c:"wild"},
+];
+const LVS = [{l:1,name:"浅"},{l:2,name:"中"},{l:3,name:"深"}];
+const LVNAME = {1:"浅",2:"中",3:"深"};
+const dirOf = k => DIRS.find(d => d.k === k);
+
+const state = {dirs:new Set(["family","love","work","life","self"]), lvs:new Set([1,2,3]),
+  used:new Set(), current:null};
+
+const $ = id => document.getElementById(id);
+function chip(text, color, on, extra=""){
+  const b = document.createElement("button");
+  b.className = "chip " + extra + (on ? " on" : "");
+  b.dataset.c = color; b.textContent = text; return b;
+}
+function renderFilters(){
+  $("dirRow").replaceChildren(...DIRS.map(d => {
+    const b = chip(d.name, d.c, state.dirs.has(d.k));
+    b.onclick = () => toggle(state.dirs, d.k, b); return b;
+  }));
+  $("lvRow").replaceChildren(...LVS.map(v => {
+    const b = chip(v.l + " · " + v.name, "black", state.lvs.has(v.l), "lv");
+    b.onclick = () => toggle(state.lvs, v.l, b); return b;
+  }));
+}
+function toggle(set, key, el){
+  if (set.has(key) && set.size === 1){ el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake"); return; }
+  set.has(key) ? set.delete(key) : set.add(key);
+  renderFilters();
+}
+function pool(){ return QS.map((q,i)=>({...q,i})).filter(q => state.dirs.has(q.d) && state.lvs.has(q.l)); }
+function left(){ return pool().filter(q => !state.used.has(q.i)); }
+
+function renderBack(){
+  $("table").innerHTML = `<div class="stack"><div class="card"></div><div class="card"></div></div>
+    <div class="card back" id="back"><span>聊聊</span></div>`;
+  $("back").onclick = draw;
+}
+function renderCard(q){
+  const d = dirOf(q.d);
+  $("table").innerHTML = `<div class="card front" data-c="${d.c}">
+      <div class="oval"></div>
+      <div class="corner tl">${LVNAME[q.l]}</div><div class="corner br">${LVNAME[q.l]}</div>
+      <div class="label">${d.name}</div>
+      <div class="q">${q.q}${q.tag ? `<br><span class="tag">${q.tag}</span>` : ""}</div>
+    </div>`;
+  $("follow").innerHTML = q.f ? `<button id="showF">👀 看看追问</button>` : "";
+  if (q.f) $("showF").onclick = () => $("follow").innerHTML = `<p><b>追问</b>${q.f}</p>`;
+}
+function draw(){
+  let l = left();
+  if (!l.length){ state.used.clear(); l = left(); }
+  const q = l[Math.floor(Math.random() * l.length)];
+  state.used.add(q.i); state.current = q;
+  renderCard(q);
+}
+$("next").onclick = draw;
+
+// 背景圆点
+const colors = ["--red","--yellow","--green","--blue"];
+for (let i = 0; i < 14; i++){
+  const s = 30 + Math.random() * 90, dot = document.createElement("i");
+  Object.assign(dot.style, {width:s+"px", height:s+"px", left:Math.random()*100+"%", top:Math.random()*100+"%",
+    background:`var(${colors[i%4]})`, animationDelay:(-Math.random()*9)+"s"});
+  $("dots").appendChild(dot);
+}
+renderFilters(); renderBack();
+</script>
+</body>
+</html>
