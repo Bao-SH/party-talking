@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
 <style>
 :root{
-  --red:#E8202A; --yellow:#FFD400; --green:#14A84B; --blue:#1268C4; --black:#16161A;
+  --red:#E8202A; --purple:#7B2FBE; --yellow:#FFD400; --green:#14A84B; --blue:#1268C4; --black:#16161A;
   --bg:#FFF6E0; --ink:#16161A; --paper:#FFFFFF;
   --fun:"ZCOOL KuaiLe","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
   --text:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
@@ -44,7 +44,7 @@ main{position:relative;z-index:1;width:100%;max-width:440px;height:100%;padding:
 .chip.on[data-c=yellow]{color:var(--black)}
 .chip[data-c=red].on{background:var(--red)} .chip[data-c=yellow].on{background:var(--yellow)}
 .chip[data-c=green].on{background:var(--green)} .chip[data-c=blue].on{background:var(--blue)}
-.chip[data-c=black].on{background:var(--black)}
+.chip[data-c=black].on{background:var(--black)} .chip[data-c=purple].on{background:var(--purple)}
 .chip[data-c=wild].on{background:conic-gradient(var(--red) 0 25%,var(--yellow) 0 50%,var(--green) 0 75%,var(--blue) 0);text-shadow:0 1px 2px #000}
 .chip.lv.on{background:var(--black)}
 .chip:not(.on){background:transparent;color:#A8A29A;border:2px dashed #C9C2B6;box-shadow:none;text-decoration:line-through;transform:scale(.94)}
@@ -71,16 +71,18 @@ main{position:relative;z-index:1;width:100%;max-width:440px;height:100%;padding:
 .stack .card:nth-child(2){transform:rotate(-5deg) translate(-8px,4px)}
 
 /* 牌面 */
-.front{color:#fff;animation:deal .55s cubic-bezier(.2,1.6,.4,1) both}
+.front{container-type:inline-size;color:#fff;animation:deal .55s cubic-bezier(.2,1.6,.4,1) both}
 .front[data-c=red]{background:var(--red)} .front[data-c=yellow]{background:var(--yellow);color:var(--black)}
 .front[data-c=green]{background:var(--green)} .front[data-c=blue]{background:var(--blue)}
-.front[data-c=black]{background:var(--black)}
+.front[data-c=black]{background:var(--black)} .front[data-c=purple]{background:var(--purple)}
 .front[data-c=wild]{background:conic-gradient(from 20deg,var(--red) 0 25%,var(--blue) 0 50%,var(--yellow) 0 75%,var(--green) 0)}
 @keyframes deal{0%{transform:translateY(-60px) rotateY(90deg) scale(.7);opacity:0}
   100%{transform:none;opacity:1}}
 .front .oval{position:absolute;width:118%;height:70%;background:#fff;border-radius:50%;transform:rotate(-55deg)}
 .front .q{position:relative;z-index:1;width:84%;color:var(--black);text-align:center;
-  font-weight:800;font-size:clamp(18px,5.4vw,22px);line-height:1.5}
+  font-weight:800;font-size:7cqw;line-height:1.45}
+.front .f{display:block;margin-top:.7em;font-size:4.6cqw;font-weight:500;line-height:1.45;color:#555}
+.spicy{position:absolute;bottom:12px;left:12px;z-index:1;font-size:9cqw;line-height:1;filter:drop-shadow(2px 2px 0 rgba(0,0,0,.5));animation:wiggle 1.6s ease-in-out infinite}
 .front .tag{display:inline-block;margin-top:8px;font-size:12px;font-weight:600;
   background:var(--black);color:#fff;border-radius:999px;padding:2px 9px}
 .corner{position:absolute;font-family:var(--fun);font-size:30px;line-height:1;z-index:1;
@@ -90,14 +92,6 @@ main{position:relative;z-index:1;width:100%;max-width:440px;height:100%;padding:
 .label{position:absolute;top:14px;right:14px;z-index:1;font-family:var(--fun);font-size:14px;
   background:rgba(0,0,0,.28);color:#fff;padding:2px 10px;border-radius:999px}
 .front[data-c=wild] .label,.front[data-c=yellow] .label{background:var(--black)}
-
-/* 追问 */
-.follow{width:100%;height:80px;flex-shrink:0;overflow:auto;text-align:center}
-.follow button{font-family:var(--fun);font-size:16px;background:none;border:3px dashed var(--black);
-  border-radius:14px;padding:8px 16px;cursor:pointer;color:var(--ink)}
-.follow p{margin:0;background:#fff;border:3px solid var(--black);border-radius:14px;padding:10px 14px;
-  font-size:16px;line-height:1.5;box-shadow:0 4px 0 var(--black);animation:pop .4s cubic-bezier(.2,1.8,.4,1)}
-.follow p b{font-family:var(--fun);font-weight:400;color:var(--red);margin-right:4px}
 @keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:none;opacity:1}}
 
 /* 操作按钮 */
@@ -126,7 +120,6 @@ main{position:relative;z-index:1;width:100%;max-width:440px;height:100%;padding:
   </div>
 
   <div class="table" id="table"></div>
-  <div class="follow" id="follow"></div>
 
   <div class="actions">
     <button class="btn reset" id="reset" aria-label="清空已抽记录">↻</button>
@@ -142,13 +135,14 @@ const DIRS = [
   {k:"work",   name:"工作与金钱", c:"green"},
   {k:"life",   name:"生活与热爱", c:"blue"},
   {k:"self",   name:"自我与人生", c:"black"},
+  {k:"fantasy",name:"幻想", c:"purple"},
   {k:"couple", name:"情侣卡", c:"wild"},
 ];
 const LVS = [{l:1,name:"浅"},{l:2,name:"中"},{l:3,name:"深"}];
 const LVNAME = {1:"浅",2:"中",3:"深"};
 const dirOf = k => DIRS.find(d => d.k === k);
 
-const state = {dirs:new Set(["family","love","work","life","self"]), lvs:new Set([1,2,3]),
+const state = {dirs:new Set(["family","love","work","life","self","fantasy","couple"]), lvs:new Set([1,2,3]),
   used:new Set(), current:null};
 
 const $ = id => document.getElementById(id);
@@ -186,10 +180,9 @@ function renderCard(q){
       <div class="oval"></div>
       <div class="corner tl">${LVNAME[q.l]}</div><div class="corner br">${LVNAME[q.l]}</div>
       <div class="label">${d.name}</div>
-      <div class="q">${q.q}${q.tag ? `<br><span class="tag">${q.tag}</span>` : ""}</div>
+      <div class="q">${q.q}${q.tag ? `<br><span class="tag">${q.tag}</span>` : ""}${q.f ? `<span class="f">→ ${q.f}</span>` : ""}</div>
+      ${q.s ? `<div class="spicy">🌶️</div>` : ""}
     </div>`;
-  $("follow").innerHTML = q.f ? `<button id="showF">👀 看看追问</button>` : "";
-  if (q.f) $("showF").onclick = () => $("follow").innerHTML = `<p><b>追问</b>${q.f}</p>`;
 }
 function draw(){
   let l = left();
@@ -212,7 +205,7 @@ $("reset").onclick = () => {
   if (!state.used.size) return toast("还没抽过题");
   if (!confirm(`清空已抽过的 ${state.used.size} 道题？清空后它们可能会再被抽到。`)) return;
   state.used.clear(); state.current = null;
-  renderBack(); $("follow").innerHTML = "";
+  renderBack();
   toast("已清空，所有题目重新可抽");
 };
 function toast(msg){
