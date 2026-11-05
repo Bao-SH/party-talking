@@ -152,7 +152,6 @@ const DIRS = [
   {k:"work",   name:"工作与金钱", c:"green"},
   {k:"life",   name:"生活与热爱", c:"blue"},
   {k:"self",   name:"自我与人生", c:"black"},
-  {k:"fantasy",name:"幻想", c:"purple"},
   {k:"couple", name:"情侣卡", c:"wild"},
 ];
 const LVS = [{l:1,name:"浅"},{l:2,name:"中"},{l:3,name:"深"}];
@@ -168,20 +167,19 @@ const RULES = {
   metoo:  {icon:"✋", name:"我也是", text:"讲完后，有类似经历的人举手补充"},
 };
 const ACTIONS = [
-  {icon:"⊘", name:"免答卡", text:"收下这张牌！之后任何一题，你都可以喊「免答」跳过。用过就没了，请自己记住。"},
   {icon:"★", name:"万能牌", text:"这轮你来出题：自己想一道题，问在场任意一个人。"},
 ];
 function rulesFor(q){
   const r = [];
   if (q.s || q.d === "couple") r.push("reverse", q.d === "couple" ? "passC" : "pass");
-  if (q.l === 1 || q.d === "fantasy") r.push("all");
+  if (q.l === 1) r.push("all");
   if (q.l >= 2) r.push("metoo");
   return [...new Set(r)];
 }
 const pick = a => a[Math.floor(Math.random() * a.length)];
 const dirOf = k => DIRS.find(d => d.k === k);
 
-const state = {dirs:new Set(["family","love","work","life","self","fantasy","couple"]), lvs:new Set([1,2,3]),
+const state = {dirs:new Set(["family","love","work","life","self","couple"]), lvs:new Set([1,2,3]),
   used:new Set(), current:null, fx:true, lastAction:false};
 
 const $ = id => document.getElementById(id);

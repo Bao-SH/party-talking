@@ -2,11 +2,11 @@
 import json, re, pathlib
 root = pathlib.Path(__file__).resolve().parent
 md = (root.parent / "题库.md").read_text(encoding="utf-8").splitlines()
-DIRS = {"一": "family", "二": "love", "三": "work", "四": "life", "五": "self", "六": "fantasy"}
+DIRS = {"一": "family", "二": "love", "三": "work", "四": "life", "五": "self"}
 LEVEL = {"🟢": 1, "🟡": 2, "🔴": 3}
 qs, d, lv, couple, spicy = [], None, None, False, False
 for i, line in enumerate(md):
-    m = re.match(r"## ([一二三四五六])、", line)
+    m = re.match(r"## ([一二三四五])、", line)
     if m: d, couple, spicy = DIRS[m.group(1)], False, False; continue
     if line.startswith("### 💑"): couple, spicy = True, False; continue
     if line.startswith("### 🌶") or line.startswith("**🌶"): spicy = True
