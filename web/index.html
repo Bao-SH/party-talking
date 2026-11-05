@@ -206,7 +206,28 @@ const dirOf = k => DIRS.find(d => d.k === k);
 
 const state = {dirs:new Set(["family","love","work","life","self","couple"]), lvs:new Set([1,2,3]),
   used:new Set(), fx:true, lastAction:false,
-  mode:"idle", picks:[], queue:[], cur:null};
+  mode:"idle", picks:[], queue:[], cur:null, round:0};
+
+// 记录存在本机：刷新或关掉页面不丢，点 ↻ 才清空
+const SAVE_KEY = "liaoliaoka:v1";
+function save(){
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify({round: state.round, used: [...state.used].map(i => QS[i].q)})); } catch(e){}
+}
+function load(){
+  try {
+    const d = JSON.parse(localStorage.getItem(SAVE_KEY) || "null"); if (!d) return;
+    const idx = new Map(QS.map((q, i) => [q.q, i]));
+    state.round = d.round || 0;
+    (d.used || []).forEach(t => idx.has(t) && state.used.add(idx.get(t)));
+  } catch(e){}
+}
+
+// 越往后，深题和辣题越容易被抽到：约 12 局后升到最高
+function weight(q){
+  const heat = Math.min(state.round / 12, 1);
+  const lv = {1: 1.5 - heat, 2: 1, 3: 0.6 + 1.4 * heat}[q.l];
+  return lv * (q.s ? 0.6 + 1.6 * heat : 1);
+}
 
 const $ = id => document.getElementById(id);
 function chip(text, color, on, extra=""){
@@ -265,7 +286,11 @@ function withRule(q){
 }
 function takeRandom(list, n){
   const a = [...list], out = [];
-  while (a.length && out.length < n) out.push(a.splice(Math.floor(Math.random() * a.length), 1)[0]);
+  while (a.length && out.length < n){
+    let r = Math.random() * a.reduce((t, q) => t + weight(q), 0), i = 0;
+    while (i < a.length - 1 && (r -= weight(a[i])) > 0) i++;
+    out.push(a.splice(i, 1)[0]);
+  }
   return out;
 }
 function setButtons(mode){
@@ -274,7 +299,7 @@ function setButtons(mode){
     fail: mode === "answer", pass: mode === "answer"};
   for (const k in show) $(k).hidden = !show[k];
   $("next").textContent = mode === "action" ? "下一局" : "输了！抽三张";
-  $("hint").textContent = {idle:"玩一局小游戏，输的人来抽", choose:"👑 赢家挑一张，给输家答",
+  $("hint").textContent = {idle: state.round ? `第 ${state.round + 1} 局 · 输的人来抽` : "玩一局小游戏，输的人来抽", choose:"👑 赢家挑一张，给输家答",
     action:"", answer: state.queue.length ? `还有 ${state.queue.length} 道等着你` : "输家请作答"}[mode];
 }
 function toIdle(){ state.picks = []; state.queue = []; state.cur = null; renderBack(); setButtons("idle"); }
@@ -283,7 +308,9 @@ function draw3(){
     state.lastAction = true; renderAction(pick(ACTIONS)); return setButtons("action");
   }
   state.lastAction = false;
+  state.round++;
   if (left().length < 3) state.used.clear();
+  save();
   state.picks = takeRandom(left(), 3).map(withRule);
   $("table").innerHTML = `<div class="pick">${state.picks.map((p, i) => {
     const d = dirOf(p.q.d);
@@ -301,7 +328,7 @@ function choose(i){
   show({...chosen, canRefuse: state.rest.length > 0});
 }
 function show(item){
-  state.cur = item; state.used.add(item.q.i);
+  state.cur = item; state.used.add(item.q.i); save();
   renderCard(item.q, item.rule, item.note || "");
   setButtons("answer");
 }
@@ -320,7 +347,7 @@ $("fail").onclick = () => {
   let cand = left().filter(q => q.d === d);
   if (!cand.length) cand = left();
   if (!cand.length){ state.used.clear(); cand = left(); }
-  state.queue.unshift({...withRule(pick(cand)), note: "追加"});
+  state.queue.unshift({...withRule(takeRandom(cand, 1)[0]), note: "追加"});
   toast("不过关！追加一题"); next();
 };
 
@@ -333,9 +360,9 @@ for (let i = 0; i < 14; i++){
   $("dots").appendChild(dot);
 }
 $("reset").onclick = () => {
-  if (!state.used.size) return toast("还没抽过题");
-  if (!confirm(`清空已抽过的 ${state.used.size} 道题？清空后它们可能会再被抽到。`)) return;
-  state.used.clear(); toIdle();
+  if (!state.used.size && !state.round) return toast("还没抽过题");
+  if (!confirm(`清空已抽过的 ${state.used.size} 道题，并从第 1 局重新开始？`)) return;
+  state.used.clear(); state.round = 0; save(); toIdle();
   toast("已清空，所有题目重新可抽");
 };
 function toast(msg){
@@ -343,7 +370,7 @@ function toast(msg){
   const t = document.createElement("div"); t.className = "toast"; t.textContent = msg;
   document.body.appendChild(t); setTimeout(() => t.remove(), 1800);
 }
-renderFilters(); toIdle();
+load(); renderFilters(); toIdle();
 </script>
 </body>
 </html>
