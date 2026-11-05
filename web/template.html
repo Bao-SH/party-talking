@@ -118,7 +118,28 @@ main{position:relative;z-index:1;width:100%;max-width:440px;height:100%;padding:
 .btn:active{transform:translateY(5px);box-shadow:0 0 0 var(--black)}
 .btn.next{background:var(--green);color:#fff;text-shadow:2px 2px 0 var(--black)}
 .btn:disabled{opacity:.45;pointer-events:none}
-.btn.reset{flex:0 0 64px;background:var(--yellow);color:var(--black);font-size:28px}
+.btn.reset{flex:0 0 52px;background:#fff;color:var(--black);font-size:26px}
+.btn.refuse{background:var(--yellow);color:var(--black)}
+.btn.fail{background:var(--red);color:#fff;text-shadow:2px 2px 0 var(--black)}
+.btn.small{font-size:17px}
+.btn[hidden]{display:none}
+.hint{font-family:var(--fun);font-size:17px;text-align:center;min-height:22px;margin:-2px 0}
+/* 三选一 */
+.pick{width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;gap:10px;padding:4px 6px}
+.mini{flex:1;max-height:132px;min-height:0;position:relative;display:flex;align-items:center;gap:8px;padding:8px 10px 8px 6px;
+  border-radius:16px;border:5px solid #fff;box-shadow:0 0 0 3px var(--black),0 6px 0 1px rgba(0,0,0,.25);cursor:pointer;
+  animation:deal .5s cubic-bezier(.2,1.6,.4,1) both}
+.mini:nth-child(1){transform:rotate(-1.5deg)} .mini:nth-child(2){transform:rotate(1.2deg);animation-delay:.1s} .mini:nth-child(3){transform:rotate(-.8deg);animation-delay:.2s}
+.mini:active{filter:brightness(.92)}
+.mini[data-c=red]{background:var(--red)} .mini[data-c=yellow]{background:var(--yellow)} .mini[data-c=green]{background:var(--green)}
+.mini[data-c=blue]{background:var(--blue)} .mini[data-c=black]{background:var(--black)}
+.mini[data-c=wild]{background:conic-gradient(from 20deg,var(--red) 0 25%,var(--blue) 0 50%,var(--yellow) 0 75%,var(--green) 0)}
+.mini .lv{flex:0 0 30px;text-align:center;font-family:var(--fun);font-size:22px;color:#fff;text-shadow:2px 2px 0 var(--black);-webkit-text-stroke:1px var(--black)}
+.mini .box{flex:1;max-height:100%;overflow:hidden;background:#fff;border:2px solid var(--black);border-radius:10px;padding:5px 9px;
+  color:var(--black);font-weight:800;font-size:14px;line-height:1.35}
+.mini .chili{position:absolute;top:-12px;right:-8px;font-size:24px;filter:drop-shadow(1px 1px 0 rgba(0,0,0,.5))}
+.rb{display:inline-block;margin-right:5px;padding:0 6px;border-radius:6px;font-family:var(--fun);font-weight:400;font-size:12px;color:#fff;vertical-align:1px}
+.rb[data-r=reverse]{background:var(--red)} .rb[data-r=pass]{background:var(--blue)} .rb[data-r=all]{background:var(--green)} .rb[data-r=metoo]{background:var(--purple)}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:5;background:var(--black);color:#fff;font-family:var(--fun);font-size:16px;padding:8px 16px;border-radius:999px;animation:pop .3s cubic-bezier(.2,1.8,.4,1)}
 
 .shake{animation:shake .4s}
@@ -136,11 +157,15 @@ main{position:relative;z-index:1;width:100%;max-width:440px;height:100%;padding:
     <div class="row" id="lvRow"></div>
   </div>
 
+  <div class="hint" id="hint"></div>
   <div class="table" id="table"></div>
 
   <div class="actions">
     <button class="btn reset" id="reset" aria-label="清空已抽记录">↻</button>
-    <button class="btn next" id="next">抽一张</button>
+    <button class="btn next" id="next">输了！抽三张</button>
+    <button class="btn refuse small" id="refuse" hidden>不答 ×2</button>
+    <button class="btn fail small" id="fail" hidden>不过关</button>
+    <button class="btn next small" id="pass" hidden>过关 ✓</button>
   </div>
 </main>
 
@@ -160,14 +185,14 @@ const LVNAME = {1:"浅",2:"中",3:"深"};
 // 功能卡
 const RULE_P = 1/5, ACTION_P = 1/15;
 const RULES = {
-  reverse:{icon:"⇄", name:"反转", text:"先点一个人答这题，你最后答"},
-  pass:   {icon:"→", name:"转交", text:"把这题交给在场任意一个人答"},
-  passC:  {icon:"→", name:"转交", text:"把这题交给另一对情侣答"},
+  reverse:{icon:"⇄", name:"赢家陪答", text:"赢家也要答这道题"},
+  pass:   {icon:"→", name:"拉人垫背", text:"你点一个人，和你一起答"},
+  passC:  {icon:"→", name:"拉人垫背", text:"再点一对情侣，和你们一起答"},
   all:    {icon:"+全", name:"全员快答", text:"每人一句话，你最后展开讲"},
   metoo:  {icon:"✋", name:"我也是", text:"讲完后，有类似经历的人举手补充"},
 };
 const ACTIONS = [
-  {icon:"★", name:"万能牌", text:"这轮你来出题：自己想一道题，问在场任意一个人。"},
+  {icon:"★", name:"赢家出题", text:"这轮不抽题：赢家现场想一道题，问输家。"},
 ];
 function rulesFor(q){
   const r = [];
@@ -180,7 +205,8 @@ const pick = a => a[Math.floor(Math.random() * a.length)];
 const dirOf = k => DIRS.find(d => d.k === k);
 
 const state = {dirs:new Set(["family","love","work","life","self","couple"]), lvs:new Set([1,2,3]),
-  used:new Set(), current:null, fx:true, lastAction:false};
+  used:new Set(), fx:true, lastAction:false,
+  mode:"idle", picks:[], queue:[], cur:null};
 
 const $ = id => document.getElementById(id);
 function chip(text, color, on, extra=""){
@@ -212,14 +238,14 @@ function left(){ return pool().filter(q => !state.used.has(q.i)); }
 function renderBack(){
   $("table").innerHTML = `<div class="stack"><div class="card"></div><div class="card"></div></div>
     <div class="card back" id="back"><span>聊聊</span></div>`;
-  $("back").onclick = draw;
+  $("back").onclick = draw3;
 }
-function renderCard(q, rule){
+function renderCard(q, rule, note=""){
   const d = dirOf(q.d);
   $("table").innerHTML = `<div class="card front" data-c="${d.c}">
       <div class="oval"></div>
       <div class="corner tl">${LVNAME[q.l]}</div><div class="corner br">${LVNAME[q.l]}</div>
-      <div class="label">${d.name}</div>
+      <div class="label">${d.name}${note ? " · " + note : ""}</div>
       <div class="q">${rule ? `<span class="rule" data-r="${rule.replace("C","")}">${RULES[rule].icon} ${RULES[rule].name}<small>${RULES[rule].text}</small></span>` : ""}${q.q}${q.tag ? `<br><span class="tag">${q.tag}</span>` : ""}${q.f ? `<span class="f">→ ${q.f}</span>` : ""}</div>
       ${q.s ? `<div class="spicy">🌶️</div>` : ""}
     </div>`;
@@ -232,19 +258,71 @@ function renderAction(a){
       <div class="act"><div class="icon">${a.icon}</div><h2>${a.name}</h2><p>${a.text}</p></div>
     </div>`;
 }
-function draw(){
+// 流程：idle → choose（赢家三选一）→ answer（输家答）→ idle
+function withRule(q){
+  const rs = rulesFor(q);
+  return {q, rule: state.fx && rs.length && Math.random() < RULE_P ? pick(rs) : null};
+}
+function takeRandom(list, n){
+  const a = [...list], out = [];
+  while (a.length && out.length < n) out.push(a.splice(Math.floor(Math.random() * a.length), 1)[0]);
+  return out;
+}
+function setButtons(mode){
+  state.mode = mode;
+  const show = {next: mode === "idle" || mode === "action", refuse: mode === "answer" && state.cur.canRefuse,
+    fail: mode === "answer", pass: mode === "answer"};
+  for (const k in show) $(k).hidden = !show[k];
+  $("next").textContent = mode === "action" ? "下一局" : "输了！抽三张";
+  $("hint").textContent = {idle:"玩一局小游戏，输的人来抽", choose:"👑 赢家挑一张，给输家答",
+    action:"", answer: state.queue.length ? `还有 ${state.queue.length} 道等着你` : "输家请作答"}[mode];
+}
+function toIdle(){ state.picks = []; state.queue = []; state.cur = null; renderBack(); setButtons("idle"); }
+function draw3(){
   if (state.fx && !state.lastAction && Math.random() < ACTION_P){
-    state.lastAction = true; return renderAction(pick(ACTIONS));
+    state.lastAction = true; renderAction(pick(ACTIONS)); return setButtons("action");
   }
   state.lastAction = false;
-  let l = left();
-  if (!l.length){ state.used.clear(); l = left(); }
-  const q = l[Math.floor(Math.random() * l.length)];
-  state.used.add(q.i); state.current = q;
-  const rs = rulesFor(q);
-  renderCard(q, state.fx && rs.length && Math.random() < RULE_P ? pick(rs) : null);
+  if (left().length < 3) state.used.clear();
+  state.picks = takeRandom(left(), 3).map(withRule);
+  $("table").innerHTML = `<div class="pick">${state.picks.map((p, i) => {
+    const d = dirOf(p.q.d);
+    return `<div class="mini" data-c="${d.c}" data-i="${i}">
+      <div class="lv">${LVNAME[p.q.l]}</div>
+      <div class="box">${p.rule ? `<span class="rb" data-r="${p.rule.replace("C","")}">${RULES[p.rule].icon} ${RULES[p.rule].name}</span>` : ""}${p.q.q}</div>
+      ${p.q.s ? `<div class="chili">🌶️</div>` : ""}</div>`;
+  }).join("")}</div>`;
+  document.querySelectorAll(".mini").forEach(el => el.onclick = () => choose(+el.dataset.i));
+  setButtons("choose");
 }
-$("next").onclick = draw;
+function choose(i){
+  const chosen = state.picks[i];
+  state.rest = state.picks.filter((_, j) => j !== i);
+  show({...chosen, canRefuse: state.rest.length > 0});
+}
+function show(item){
+  state.cur = item; state.used.add(item.q.i);
+  renderCard(item.q, item.rule, item.note || "");
+  setButtons("answer");
+}
+function next(){
+  if (state.queue.length) show(state.queue.shift()); else { toast("过关！下一局"); toIdle(); }
+}
+$("next").onclick = () => state.mode === "action" ? toIdle() : draw3();
+$("pass").onclick = next;
+$("refuse").onclick = () => {
+  // 不答：改答赢家没选的另外两张
+  state.queue = state.rest.map((p, k) => ({...p, note: `加罚 ${k + 1}/${state.rest.length}`}));
+  state.rest = []; toast("不答？那就答另外两道！"); next();
+};
+$("fail").onclick = () => {
+  const d = state.cur.q.d;
+  let cand = left().filter(q => q.d === d);
+  if (!cand.length) cand = left();
+  if (!cand.length){ state.used.clear(); cand = left(); }
+  state.queue.unshift({...withRule(pick(cand)), note: "追加"});
+  toast("不过关！追加一题"); next();
+};
 
 // 背景圆点
 const colors = ["--red","--yellow","--green","--blue"];
@@ -257,8 +335,7 @@ for (let i = 0; i < 14; i++){
 $("reset").onclick = () => {
   if (!state.used.size) return toast("还没抽过题");
   if (!confirm(`清空已抽过的 ${state.used.size} 道题？清空后它们可能会再被抽到。`)) return;
-  state.used.clear(); state.current = null;
-  renderBack();
+  state.used.clear(); toIdle();
   toast("已清空，所有题目重新可抽");
 };
 function toast(msg){
@@ -266,7 +343,7 @@ function toast(msg){
   const t = document.createElement("div"); t.className = "toast"; t.textContent = msg;
   document.body.appendChild(t); setTimeout(() => t.remove(), 1800);
 }
-renderFilters(); renderBack();
+renderFilters(); toIdle();
 </script>
 </body>
 </html>
